@@ -28,8 +28,14 @@ describe("deterministicPartitionKey", () => {
       id: 12,
       partitionKey: "key",
     };
+    const emptyStringKeyEvent = {
+      name: "Some Event Name",
+      id: 12,
+      partitionKey: "",
+    };
     const zeroKeyEvent = { name: "Some Event Name", id: 12, partitionKey: 0 };
 
+    expect(deterministicPartitionKey(emptyStringKeyEvent)).not.toBe("");
     expect(deterministicPartitionKey(stringKeyEvent)).toBe("key");
     expect(deterministicPartitionKey(zeroKeyEvent)).toBe("0");
   });
