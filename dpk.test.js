@@ -1,4 +1,12 @@
+const crypto = require("crypto");
 const { deterministicPartitionKey } = require("./dpk");
+
+// This function is intentionally duplicated from the dpk.js module
+// to ensure that if the hashing logic changes in the implementation,
+// it must also be updated here intentionally, and vice versa.
+const createHash = (data) => {
+  return crypto.createHash("sha3-512").update(data).digest("hex");
+};
 
 describe("deterministicPartitionKey", () => {
   it("Returns the literal '0' when given no input", () => {
@@ -9,18 +17,21 @@ describe("deterministicPartitionKey", () => {
 
   it("Returns hashed event when partitionKey is undefined", () => {
     const event = { name: "Sample Event", id: 111 };
-    const hash = require("crypto")
-      .createHash("sha3-512")
-      .update(JSON.stringify(event))
-      .digest("hex");
+    const hash = createHash(JSON.stringify(event));
 
     expect(deterministicPartitionKey(event)).toBe(hash);
   });
 
   it("Returns partitionKey when it is defined", () => {
-    const event = { name: "Some Event Name", id: 12, partitionKey: "key" };
+    const stringKeyEvent = {
+      name: "Some Event Name",
+      id: 12,
+      partitionKey: "key",
+    };
+    const zeroKeyEvent = { name: "Some Event Name", id: 12, partitionKey: 0 };
 
-    expect(deterministicPartitionKey(event)).toBe("key");
+    expect(deterministicPartitionKey(stringKeyEvent)).toBe("key");
+    expect(deterministicPartitionKey(zeroKeyEvent)).toBe("0");
   });
 
   it("Returns stringified partition key if it's not a string", () => {
@@ -51,10 +62,7 @@ describe("deterministicPartitionKey", () => {
       id: 999,
       partitionKey: "k".repeat(257),
     };
-    const hash = require("crypto")
-      .createHash("sha3-512")
-      .update(event.partitionKey)
-      .digest("hex");
+    const hash = createHash(event.partitionKey);
 
     expect(deterministicPartitionKey(event)).toBe(hash);
   });
